@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Base de Datos de Pacientes - Dr. Adrian Cuellar</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1a3a5c;
+            --primary-light: #2d5a8b;
+            --accent: #e8a838;
+            --bg: #f8f9fa;
+            --card-bg: #ffffff;
+            --text: #1a1a1a;
+            --text-muted: #6c757d;
+            --border: #e0e4e8;
+            --success: #28a745;
+            --row-hover: #f0f7ff;
+            --error: #dc3545;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        /* ==================== LOGIN STYLES ==================== */
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            padding: 1rem;
+        }
+
+        .login-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 3rem;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .login-header .icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .login-header h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.75rem;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .login-header p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group label {
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: var(--text);
+        }
+
+        .form-group input {
+            padding: 0.875rem 1rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: all 0.2s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(26, 58, 92, 0.1);
+        }
+
+        .login-btn {
+            padding: 1rem;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 0.5rem;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(26, 58, 92, 0.3);
+        }
+
+        .login-error {
+            background: #fee2e2;
+            border: 1px solid var(--error);
+            color: var(--error);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            text-align: center;
+            display: none;
+        }
+
+        .login-error.show {
+            display: block;
+        }
+
+        /* ==================== MAIN APP STYLES ==================== */
+        .app-container {
+            display: none;
+        }
+
+        .app-container.active {
+            display: block;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            padding: 2rem 3rem;
+            box-shadow: 0 4px 20px rgba(26, 58, 92, 0.15);
+        }
+
+        .header-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            letter-spacing: -0.5px;
+        }
+
+        .header-left p {
+            opacity: 0.85;
+            font-size: 0.9rem;
+        }
+
+        .logout-btn {
+            padding: 0.625rem 1.25rem;
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .controls {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 1.5rem 3rem;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .search-container {
+            flex: 1;
+            min-width: 300px;
+            position: relative;
+        }
+
+        .search-container::before {
+            content: "🔍";
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1rem;
+            opacity: 0.5;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.875rem 1rem 0.875rem 2.75rem;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: all 0.2s ease;
+            background: var(--card-bg);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(26, 58, 92, 0.1);
+        }
+
+        .search-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .stats {
+            display: flex;
+            gap: 1.5rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .stat-value {
+            font-weight: 600;
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
+
+        .refresh-btn {
+            padding: 0.75rem 1.25rem;
+            background: var(--card-bg);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.9rem;
+            color: var(--text);
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .refresh-btn:hover {
+            border-color: var(--primary);
+            background: var(--row-hover);
+        }
+
+        .refresh-btn.loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .main-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 0 3rem 3rem;
+        }
+
+        .table-container {
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            max-height: calc(100vh - 280px);
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+
+        thead {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        th {
+            background: var(--primary);
+            color: white;
+            padding: 1rem 0.75rem;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.2s ease;
+        }
+
+        th:hover {
+            background: var(--primary-light);
+        }
+
+        th.sorted-asc::after {
+            content: " ↑";
+        }
+
+        th.sorted-desc::after {
+            content: " ↓";
+        }
+
+        td {
+            padding: 0.875rem 0.75rem;
+            border-bottom: 1px solid var(--border);
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        td:first-child {
+            font-weight: 500;
+            color: var(--primary);
+        }
+
+        tr:hover td {
+            background: var(--row-hover);
+        }
+
+        tr.selected td {
+            background: #e3f2fd;
+        }
+
+        .action-cell {
+            white-space: nowrap;
+        }
+
+        .copy-btn {
+            padding: 0.5rem 1rem;
+            background: linear-gradient(135deg, var(--accent) 0%, #d4922c 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(232, 168, 56, 0.3);
+        }
+
+        .copy-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(232, 168, 56, 0.4);
+        }
+
+        .copy-btn.copied {
+            background: var(--success);
+            box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+        }
+
+        .loading-overlay {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem;
+            color: var(--text-muted);
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            color: #856404;
+        }
+
+        .error-message h3 {
+            margin-bottom: 0.5rem;
+        }
+
+        .error-message code {
+            background: rgba(0,0,0,0.05);
+            padding: 0.125rem 0.375rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+        }
+
+        .no-results h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--primary);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .config-section {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 2px dashed var(--border);
+        }
+
+        .config-section h3 {
+            font-size: 1rem;
+            margin-bottom: 0.75rem;
+            color: var(--primary);
+        }
+
+        .config-section input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .config-section input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .config-section .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: 600;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 1.5rem 1rem;
+            }
+
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+
+            .controls, .main-content {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            .search-container {
+                min-width: 100%;
+            }
+
+            .stats {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .login-card {
+                padding: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- ==================== LOGIN SCREEN ==================== -->
+    <div class="login-container" id="loginContainer">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="icon">🏥</div>
+                <h1>Sistema de Pacientes</h1>
+                <p>Dr. Adrian Cuellar</p>
+            </div>
+            <form class="login-form" id="loginForm" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label for="username">Usuario</label>
+                    <input type="text" id="username" name="username" placeholder="Ingrese su usuario" required autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label for="password">Contraseña</label>
+                    <input type="password" id="password" name="password" placeholder="Ingrese su contraseña" required autocomplete="current-password">
+                </div>
+                <div class="login-error" id="loginError">
+                    Usuario o contraseña incorrectos
+                </div>
+                <button type="submit" class="login-btn">
+                    Iniciar Sesión
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==================== MAIN APPLICATION ==================== -->
+    <div class="app-container" id="appContainer">
+        <header class="header">
+            <div class="header-content">
+                <div class="header-left">
+                    <h1>🏥 Base de Datos de Pacientes</h1>
+                    <p>Dr. Adrian Cuellar - Cuestionario de Consulta</p>
+                </div>
+                <button class="logout-btn" onclick="handleLogout()">
+                    🚪 Cerrar Sesión
+                </button>
+            </div>
+        </header>
+
+        <div class="controls">
+            <div class="search-container">
+                <input type="text" class="search-input" id="searchInput" placeholder="Buscar por nombre, apellido, fecha, o cualquier campo...">
+            </div>
+            <div class="stats">
+                <div class="stat-item">
+                    <span>Total:</span>
+                    <span class="stat-value" id="totalCount">-</span>
+                </div>
+                <div class="stat-item">
+                    <span>Mostrando:</span>
+                    <span class="stat-value" id="filteredCount">-</span>
+                </div>
+            </div>
+            <button class="refresh-btn" id="refreshBtn" onclick="loadData()">
+                🔄 Actualizar
+            </button>
+        </div>
+
+        <main class="main-content">
+            <div id="configSection" class="config-section">
+                <h3>⚙️ Configuración Inicial</h3>
+                <p style="margin-bottom: 1rem; color: var(--text-muted); font-size: 0.9rem;">
+                    Para que esta aplicación funcione, necesitas publicar tu Google Sheet como CSV.<br>
+                    <strong>Pasos:</strong> En Google Sheets → Archivo → Compartir → Publicar en la Web → Selecciona "Valores separados por comas (.csv)" → Publicar
+                </p>
+                <input type="text" id="sheetUrl" placeholder="Pega aquí la URL de tu Google Sheet publicado como CSV"
+                       value="https://docs.google.com/spreadsheets/d/1JZN0aAlnVZEXXqeNF3JnbotWf0Az59Iwtv0wtJ6OmKE/export?format=csv&gid=571971247">
+                <button class="btn-primary" onclick="saveConfigAndLoad()">Guardar y Cargar Datos</button>
+            </div>
+
+            <div class="table-container">
+                <div id="loadingOverlay" class="loading-overlay">
+                    <div class="spinner"></div>
+                    <p>Cargando datos...</p>
+                </div>
+                <div id="errorContainer"></div>
+                <div class="table-wrapper" id="tableWrapper" style="display: none;">
+                    <table id="dataTable">
+                        <thead id="tableHead"></thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+                <div id="noResults" class="no-results hidden">
+                    <h3>No se encontraron resultados</h3>
+                    <p>Intenta con otros términos de búsqueda</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="toast" id="toast">✓ Información copiada al portapapeles</div>
+
+    <script>
+        // ==================== AUTHENTICATION ====================
+        // Simple hash function for basic credential obfuscation
+        function simpleHash(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash;
+            }
+            return hash.toString();
+        }
+
+        // Credentials (hashed for basic obfuscation)
+        const VALID_CREDENTIALS = {
+            userHash: simpleHash('doctor'),
+            passHash: simpleHash('cuellar2024')
+        };
+
+        const AUTH_KEY = 'patientDbAuth';
+
+        function isAuthenticated() {
+            return sessionStorage.getItem(AUTH_KEY) === 'authenticated';
+        }
+
+        function setAuthenticated(value) {
+            if (value) {
+                sessionStorage.setItem(AUTH_KEY, 'authenticated');
+            } else {
+                sessionStorage.removeItem(AUTH_KEY);
+            }
+        }
+
+        function handleLogin(event) {
+            event.preventDefault();
+
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const errorEl = document.getElementById('loginError');
+
+            const userHash = simpleHash(username);
+            const passHash = simpleHash(password);
+
+            if (userHash === VALID_CREDENTIALS.userHash && passHash === VALID_CREDENTIALS.passHash) {
+                setAuthenticated(true);
+                showApp();
+                errorEl.classList.remove('show');
+            } else {
+                errorEl.classList.add('show');
+                document.getElementById('password').value = '';
+            }
+        }
+
+        function handleLogout() {
+            setAuthenticated(false);
+            showLogin();
+        }
+
+        function showLogin() {
+            document.getElementById('loginContainer').style.display = 'flex';
+            document.getElementById('appContainer').classList.remove('active');
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('loginError').classList.remove('show');
+        }
+
+        function showApp() {
+            document.getElementById('loginContainer').style.display = 'none';
+            document.getElementById('appContainer').classList.add('active');
+
+            // Load data if authenticated
+            const config = getConfig();
+            if (config.sheetUrl) {
+                document.getElementById('sheetUrl').value = config.sheetUrl;
+                loadData();
+            } else {
+                document.getElementById('loadingOverlay').style.display = 'none';
+            }
+        }
+
+        // ==================== DATA STATE ====================
+        let allData = [];
+        let filteredData = [];
+        let headers = [];
+        let sortColumn = 0;
+        let sortDirection = 'desc';
+
+        // Configuration
+        const STORAGE_KEY = 'patientDbConfig';
+
+        function getConfig() {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            return stored ? JSON.parse(stored) : { sheetUrl: '' };
+        }
+
+        function saveConfig(config) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
+        }
+
+        function saveConfigAndLoad() {
+            const url = document.getElementById('sheetUrl').value.trim();
+            if (url) {
+                saveConfig({ sheetUrl: url });
+                document.getElementById('configSection').classList.add('hidden');
+                loadData();
+            }
+        }
+
+        // CSV Parser
+        function parseCSV(csv) {
+            const lines = [];
+            let currentLine = '';
+            let inQuotes = false;
+
+            for (let i = 0; i < csv.length; i++) {
+                const char = csv[i];
+
+                if (char === '"') {
+                    if (inQuotes && csv[i + 1] === '"') {
+                        currentLine += '"';
+                        i++;
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === '\n' && !inQuotes) {
+                    lines.push(currentLine);
+                    currentLine = '';
+                } else if (char === '\r' && !inQuotes) {
+                    // Skip carriage return
+                } else {
+                    currentLine += char;
+                }
+            }
+
+            if (currentLine) {
+                lines.push(currentLine);
+            }
+
+            return lines.map(line => {
+                const values = [];
+                let current = '';
+                let inQuotes = false;
+
+                for (let i = 0; i < line.length; i++) {
+                    const char = line[i];
+
+                    if (char === '"') {
+                        if (inQuotes && line[i + 1] === '"') {
+                            current += '"';
+                            i++;
+                        } else {
+                            inQuotes = !inQuotes;
+                        }
+                    } else if (char === ',' && !inQuotes) {
+                        values.push(current.trim());
+                        current = '';
+                    } else {
+                        current += char;
+                    }
+                }
+
+                values.push(current.trim());
+                return values;
+            });
+        }
+
+        // Data Loading
+        async function loadData() {
+            const config = getConfig();
+            let url = config.sheetUrl || document.getElementById('sheetUrl').value.trim();
+
+            if (!url) {
+                document.getElementById('configSection').classList.remove('hidden');
+                document.getElementById('loadingOverlay').style.display = 'none';
+                return;
+            }
+
+            document.getElementById('configSection').classList.add('hidden');
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            document.getElementById('tableWrapper').style.display = 'none';
+            document.getElementById('errorContainer').innerHTML = '';
+            document.getElementById('refreshBtn').classList.add('loading');
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const csv = await response.text();
+                const parsed = parseCSV(csv);
+
+                if (parsed.length < 2) {
+                    throw new Error('No hay datos suficientes en el archivo');
+                }
+
+                headers = parsed[0];
+                allData = parsed.slice(1).filter(row => row.some(cell => cell.trim() !== ''));
+
+                // Sort by date (first column) descending by default
+                sortColumn = 0;
+                sortDirection = 'desc';
+                sortData();
+
+                renderTable();
+                updateStats();
+
+                document.getElementById('loadingOverlay').style.display = 'none';
+                document.getElementById('tableWrapper').style.display = 'block';
+
+            } catch (error) {
+                console.error('Error loading data:', error);
+                document.getElementById('loadingOverlay').style.display = 'none';
+                document.getElementById('errorContainer').innerHTML = `
+                    <div class="error-message">
+                        <h3>⚠️ Error al cargar los datos</h3>
+                        <p>No se pudieron cargar los datos del Google Sheet.</p>
+                        <p><strong>Posibles causas:</strong></p>
+                        <ul style="margin: 0.5rem 0 0.5rem 1.5rem;">
+                            <li>El Sheet no está publicado en la web</li>
+                            <li>La URL no es correcta</li>
+                            <li>Problemas de conexión</li>
+                        </ul>
+                        <p style="margin-top: 0.75rem;"><strong>Solución:</strong> Ve a tu Google Sheet → Archivo → Compartir → Publicar en la web → Selecciona CSV → Publicar</p>
+                        <button onclick="document.getElementById('configSection').classList.remove('hidden')" style="margin-top: 1rem; padding: 0.5rem 1rem; cursor: pointer;">
+                            Cambiar URL
+                        </button>
+                    </div>
+                `;
+            } finally {
+                document.getElementById('refreshBtn').classList.remove('loading');
+            }
+        }
+
+        // Sorting
+        function sortData() {
+            const data = filteredData.length > 0 || document.getElementById('searchInput').value ? filteredData : allData;
+
+            data.sort((a, b) => {
+                let valA = a[sortColumn] || '';
+                let valB = b[sortColumn] || '';
+
+                // Try to parse as date for first column
+                if (sortColumn === 0) {
+                    const dateA = new Date(valA);
+                    const dateB = new Date(valB);
+                    if (!isNaN(dateA) && !isNaN(dateB)) {
+                        return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
+                    }
+                }
+
+                // Try numeric comparison
+                const numA = parseFloat(valA);
+                const numB = parseFloat(valB);
+                if (!isNaN(numA) && !isNaN(numB)) {
+                    return sortDirection === 'asc' ? numA - numB : numB - numA;
+                }
+
+                // String comparison
+                return sortDirection === 'asc'
+                    ? valA.localeCompare(valB, 'es')
+                    : valB.localeCompare(valA, 'es');
+            });
+        }
+
+        function handleSort(colIndex) {
+            if (sortColumn === colIndex) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = colIndex;
+                sortDirection = 'asc';
+            }
+
+            sortData();
+            renderTable();
+        }
+
+        // Filtering
+        function filterData(searchTerm) {
+            const term = searchTerm.toLowerCase().trim();
+
+            if (!term) {
+                filteredData = [...allData];
+            } else {
+                filteredData = allData.filter(row =>
+                    row.some(cell => cell.toLowerCase().includes(term))
+                );
+            }
+
+            sortData();
+            renderTable();
+            updateStats();
+        }
+
+        // Rendering
+        function renderTable() {
+            const dataToRender = document.getElementById('searchInput').value
+                ? filteredData
+                : allData;
+
+            // Render headers
+            const thead = document.getElementById('tableHead');
+            thead.innerHTML = `
+                <tr>
+                    ${headers.map((h, i) => `
+                        <th onclick="handleSort(${i})" class="${sortColumn === i ? (sortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}">
+                            ${truncateText(h, 30)}
+                        </th>
+                    `).join('')}
+                    <th style="cursor: default;">Acciones</th>
+                </tr>
+            `;
+
+            // Render body
+            const tbody = document.getElementById('tableBody');
+
+            if (dataToRender.length === 0) {
+                tbody.innerHTML = '';
+                document.getElementById('noResults').classList.remove('hidden');
+                return;
+            }
+
+            document.getElementById('noResults').classList.add('hidden');
+
+            tbody.innerHTML = dataToRender.map((row, rowIndex) => `
+                <tr>
+                    ${row.map((cell, cellIndex) => `
+                        <td title="${escapeHtml(cell)}">${truncateText(cell, 40)}</td>
+                    `).join('')}
+                    ${row.length < headers.length ? Array(headers.length - row.length).fill('<td></td>').join('') : ''}
+                    <td class="action-cell">
+                        <button class="copy-btn" onclick="copyPatientInfo(${rowIndex})">
+                            📋 Copiar como texto
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function truncateText(text, maxLength) {
+            if (!text) return '';
+            if (text.length <= maxLength) return escapeHtml(text);
+            return escapeHtml(text.substring(0, maxLength)) + '...';
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function updateStats() {
+            const total = allData.length;
+            const filtered = document.getElementById('searchInput').value ? filteredData.length : total;
+
+            document.getElementById('totalCount').textContent = total;
+            document.getElementById('filteredCount').textContent = filtered;
+        }
+
+        // Copy functionality
+        function copyPatientInfo(rowIndex) {
+            const dataToUse = document.getElementById('searchInput').value ? filteredData : allData;
+            const row = dataToUse[rowIndex];
+
+            let text = '';
+            headers.forEach((header, i) => {
+                const value = row[i] || '';
+                if (value.trim()) {
+                    text += `-*${header.toUpperCase()}*:   ${value}\n`;
+                }
+            });
+
+            navigator.clipboard.writeText(text.trim()).then(() => {
+                showToast('✓ Información copiada al portapapeles');
+
+                // Visual feedback on button
+                const btn = event.target;
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '✓ Copiado';
+                btn.classList.add('copied');
+
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.classList.remove('copied');
+                }, 2000);
+            }).catch(err => {
+                console.error('Error copying:', err);
+                showToast('❌ Error al copiar');
+            });
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Event Listeners
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            filterData(e.target.value);
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === '/' && e.target.tagName !== 'INPUT') {
+                e.preventDefault();
+                document.getElementById('searchInput').focus();
+            }
+            if (e.key === 'Escape') {
+                document.getElementById('searchInput').value = '';
+                filterData('');
+            }
+        });
+
+        // ==================== INITIALIZE ====================
+        // Check authentication on page load
+        if (isAuthenticated()) {
+            showApp();
+        } else {
+            showLogin();
+        }
+    </script>
+</body>
+</html>
