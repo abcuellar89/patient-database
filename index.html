@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -954,12 +954,12 @@
             const thead = document.getElementById('tableHead');
             thead.innerHTML = `
                 <tr>
+                    <th style="cursor: default;">Acciones</th>
                     ${headers.map((h, i) => `
                         <th onclick="handleSort(${i})" class="${sortColumn === i ? (sortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}">
                             ${truncateText(h, 30)}
                         </th>
                     `).join('')}
-                    <th style="cursor: default;">Acciones</th>
                 </tr>
             `;
 
@@ -976,15 +976,15 @@
 
             tbody.innerHTML = dataToRender.map((row, rowIndex) => `
                 <tr>
+                    <td class="action-cell">
+                        <button class="copy-btn" onclick="copyPatientInfo(${rowIndex})">
+                            📋 Copiar
+                        </button>
+                    </td>
                     ${row.map((cell, cellIndex) => `
                         <td title="${escapeHtml(cell)}">${truncateText(cell, 40)}</td>
                     `).join('')}
                     ${row.length < headers.length ? Array(headers.length - row.length).fill('<td></td>').join('') : ''}
-                    <td class="action-cell">
-                        <button class="copy-btn" onclick="copyPatientInfo(${rowIndex})">
-                            📋 Copiar como texto
-                        </button>
-                    </td>
                 </tr>
             `).join('');
         }
@@ -1015,16 +1015,28 @@
             const dataToUse = document.getElementById('searchInput').value ? filteredData : allData;
             const row = dataToUse[rowIndex];
 
-            let text = '';
+            // Build table format for Nimbo
+            let table = '';
+            const divider = '─'.repeat(50);
+
+            table += `┌${'─'.repeat(30)}┬${'─'.repeat(40)}┐\n`;
+            table += `│ ${'PREGUNTA'.padEnd(28)} │ ${'RESPUESTA'.padEnd(38)} │\n`;
+            table += `├${'─'.repeat(30)}┼${'─'.repeat(40)}┤\n`;
+
             headers.forEach((header, i) => {
                 const value = row[i] || '';
                 if (value.trim()) {
-                    text += `-*${header.toUpperCase()}*:   ${value}\n`;
+                    // Truncate long values and handle multiline
+                    const cleanHeader = header.substring(0, 28).padEnd(28);
+                    const cleanValue = value.substring(0, 38).padEnd(38);
+                    table += `│ ${cleanHeader} │ ${cleanValue} │\n`;
                 }
             });
 
-            navigator.clipboard.writeText(text.trim()).then(() => {
-                showToast('✓ Información copiada al portapapeles');
+            table += `└${'─'.repeat(30)}┴${'─'.repeat(40)}┘`;
+
+            navigator.clipboard.writeText(table).then(() => {
+                showToast('✓ Tabla copiada al portapapeles');
 
                 // Visual feedback on button
                 const btn = event.target;
