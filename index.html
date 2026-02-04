@@ -906,19 +906,37 @@
 
                     <!-- Tratamiento Previo -->
                     <div class="calc-section">
-                        <div class="calc-section-title">📅 Meses de Tratamiento Previo (distribuye los <span id="elapsedMonthsHint" style="color: #6b46c1;">0</span> meses)</div>
+                        <div class="calc-section-title">📅 Tratamiento Previo (distribuye: <span id="elapsedMonthsHint" style="color: #6b46c1;">0 meses</span>)</div>
                         <div class="calc-row">
                             <div class="calc-field">
-                                <label>Meses a 20 mg/día</label>
-                                <input type="number" id="calcMeses20" placeholder="0" min="0" max="24" value="0">
+                                <label>Tiempo a 20 mg/día</label>
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <input type="number" id="calcTiempo20" placeholder="0" min="0" max="730" value="0" style="flex: 1;">
+                                    <select id="calcUnidad20" style="width: 90px;">
+                                        <option value="meses">meses</option>
+                                        <option value="dias">días</option>
+                                    </select>
+                                </div>
                             </div>
                             <div class="calc-field">
-                                <label>Meses a 40 mg/día</label>
-                                <input type="number" id="calcMeses40" placeholder="0" min="0" max="24" value="0">
+                                <label>Tiempo a 40 mg/día</label>
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <input type="number" id="calcTiempo40" placeholder="0" min="0" max="730" value="0" style="flex: 1;">
+                                    <select id="calcUnidad40" style="width: 90px;">
+                                        <option value="meses">meses</option>
+                                        <option value="dias">días</option>
+                                    </select>
+                                </div>
                             </div>
                             <div class="calc-field">
-                                <label>Meses a 60/40 mg (3d×60 + 4d×40)</label>
-                                <input type="number" id="calcMesesMixto" placeholder="0" min="0" max="24" value="0">
+                                <label>Tiempo a 60/40 mg (3d×60 + 4d×40)</label>
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <input type="number" id="calcTiempoMixto" placeholder="0" min="0" max="730" value="0" style="flex: 1;">
+                                    <select id="calcUnidadMixto" style="width: 90px;">
+                                        <option value="meses">meses</option>
+                                        <option value="dias">días</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1529,22 +1547,30 @@
 
             // Format display
             let displayText = '';
+            const totalDays = months * 30 + remainingDays;
             if (months <= 0 && remainingDays <= 0) {
                 displayText = 'Aún no ha iniciado';
-                hintSpan.textContent = '0';
+                hintSpan.textContent = '0 meses';
             } else if (months === 0) {
                 displayText = `${remainingDays} días`;
-                hintSpan.textContent = '0';
+                hintSpan.textContent = `${remainingDays} días`;
             } else if (remainingDays <= 0) {
                 displayText = `${months} mes${months > 1 ? 'es' : ''}`;
-                hintSpan.textContent = months;
+                hintSpan.textContent = `${months} mes${months > 1 ? 'es' : ''} (${totalDays} días)`;
             } else {
                 displayText = `${months} mes${months > 1 ? 'es' : ''} y ${remainingDays} días`;
-                hintSpan.textContent = months;
+                hintSpan.textContent = `${months} mes${months > 1 ? 'es' : ''} y ${remainingDays} días (${totalDays} días)`;
             }
 
             valueSpan.textContent = displayText;
             display.style.display = 'block';
+        }
+
+        // Helper: convert time to days based on unit
+        function getTiempoEnDias(inputId, unidadId) {
+            const valor = parseFloat(document.getElementById(inputId).value) || 0;
+            const unidad = document.getElementById(unidadId).value;
+            return unidad === 'dias' ? valor : valor * 30;
         }
 
         function calculateIsotretinoin() {
@@ -1552,9 +1578,11 @@
             const dosisTotal = parseFloat(document.getElementById('calcDosisTotal').value);
             const peso = parseFloat(document.getElementById('calcPeso').value);
             const fechaInicio = document.getElementById('calcFechaInicio').value;
-            const meses20 = parseFloat(document.getElementById('calcMeses20').value) || 0;
-            const meses40 = parseFloat(document.getElementById('calcMeses40').value) || 0;
-            const mesesMixto = parseFloat(document.getElementById('calcMesesMixto').value) || 0;
+
+            // Get time in DAYS for each dosage
+            const dias20 = getTiempoEnDias('calcTiempo20', 'calcUnidad20');
+            const dias40 = getTiempoEnDias('calcTiempo40', 'calcUnidad40');
+            const diasMixto = getTiempoEnDias('calcTiempoMixto', 'calcUnidadMixto');
 
             // Validate inputs
             if (!peso || peso <= 0) {
@@ -1569,34 +1597,34 @@
             // Calculate doses
             const dosisTotalRequerida = dosisTotal * peso; // mg total
 
-            // Monthly doses (30 days per month)
-            const dosisMensual20 = 20 * 30; // 600 mg/month
-            const dosisMensual40 = 40 * 30; // 1200 mg/month
-            const dosisMensualMixto = (60 * 3 + 40 * 4) * 4.33; // ~1472 mg/month (3 days 60mg + 4 days 40mg per week)
+            // Daily doses
+            const dosisDiaria20 = 20; // mg/day
+            const dosisDiaria40 = 40; // mg/day
+            const dosisDiariaMixto = (60 * 3 + 40 * 4) / 7; // ~48.57 mg/day average (3 days 60mg + 4 days 40mg per week)
 
-            // Dose already taken
-            const dosisTomada = (meses20 * dosisMensual20) + (meses40 * dosisMensual40) + (mesesMixto * dosisMensualMixto);
+            // Dose already taken (calculated in days)
+            const dosisTomada = (dias20 * dosisDiaria20) + (dias40 * dosisDiaria40) + (diasMixto * dosisDiariaMixto);
             const dosisRestante = Math.max(0, dosisTotalRequerida - dosisTomada);
 
-            // Calculate time remaining for each scenario
-            const mesesRestantes20 = dosisRestante / dosisMensual20;
-            const mesesRestantes40 = dosisRestante / dosisMensual40;
-            const mesesRestantesMixto = dosisRestante / dosisMensualMixto;
+            // Calculate time remaining for each scenario (in days, then convert to months)
+            const diasRestantes20 = dosisRestante / dosisDiaria20;
+            const diasRestantes40 = dosisRestante / dosisDiaria40;
+            const diasRestantesMixto = dosisRestante / dosisDiariaMixto;
 
             // Calculate end dates
             const startDate = new Date(fechaInicio);
-            const mesesTranscurridos = meses20 + meses40 + mesesMixto;
+            const diasTranscurridos = dias20 + dias40 + diasMixto;
 
-            function addMonths(date, months) {
+            function addDays(date, days) {
                 const result = new Date(date);
-                result.setMonth(result.getMonth() + Math.floor(months));
-                result.setDate(result.getDate() + Math.round((months % 1) * 30));
+                result.setDate(result.getDate() + Math.round(days));
                 return result;
             }
 
-            function formatMonthsDays(months) {
-                const m = Math.floor(months);
-                const d = Math.round((months - m) * 30);
+            function formatDaysAsMonths(days) {
+                const totalDays = Math.round(days);
+                const m = Math.floor(totalDays / 30);
+                const d = totalDays % 30;
                 if (m === 0) return `${d} días`;
                 if (d === 0) return `${m} mes${m > 1 ? 'es' : ''}`;
                 return `${m} mes${m > 1 ? 'es' : ''}, ${d} días`;
@@ -1606,23 +1634,23 @@
                 return date.toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' });
             }
 
-            const currentDate = addMonths(startDate, mesesTranscurridos);
-            const fechaFin20 = addMonths(currentDate, mesesRestantes20);
-            const fechaFin40 = addMonths(currentDate, mesesRestantes40);
-            const fechaFinMixto = addMonths(currentDate, mesesRestantesMixto);
+            const currentDate = addDays(startDate, diasTranscurridos);
+            const fechaFin20 = addDays(currentDate, diasRestantes20);
+            const fechaFin40 = addDays(currentDate, diasRestantes40);
+            const fechaFinMixto = addDays(currentDate, diasRestantesMixto);
 
             // Update UI
             document.getElementById('resDosisTotal').textContent = `${dosisTotalRequerida.toLocaleString()} mg`;
             document.getElementById('resDosisTomada').textContent = `${Math.round(dosisTomada).toLocaleString()} mg`;
             document.getElementById('resDosisRestante').textContent = `${Math.round(dosisRestante).toLocaleString()} mg`;
 
-            document.getElementById('resTiempo20').textContent = formatMonthsDays(mesesRestantes20);
+            document.getElementById('resTiempo20').textContent = formatDaysAsMonths(diasRestantes20);
             document.getElementById('resFecha20').textContent = formatDate(fechaFin20);
 
-            document.getElementById('resTiempo40').textContent = formatMonthsDays(mesesRestantes40);
+            document.getElementById('resTiempo40').textContent = formatDaysAsMonths(diasRestantes40);
             document.getElementById('resFecha40').textContent = formatDate(fechaFin40);
 
-            document.getElementById('resTiempoMixto').textContent = formatMonthsDays(mesesRestantesMixto);
+            document.getElementById('resTiempoMixto').textContent = formatDaysAsMonths(diasRestantesMixto);
             document.getElementById('resFechaMixto').textContent = formatDate(fechaFinMixto);
 
             // Store for copying
@@ -1632,11 +1660,11 @@
                 dosisTotalRequerida,
                 dosisTomada: Math.round(dosisTomada),
                 dosisRestante: Math.round(dosisRestante),
-                tiempo20: formatMonthsDays(mesesRestantes20),
+                tiempo20: formatDaysAsMonths(diasRestantes20),
                 fecha20: formatDate(fechaFin20),
-                tiempo40: formatMonthsDays(mesesRestantes40),
+                tiempo40: formatDaysAsMonths(diasRestantes40),
                 fecha40: formatDate(fechaFin40),
-                tiempoMixto: formatMonthsDays(mesesRestantesMixto),
+                tiempoMixto: formatDaysAsMonths(diasRestantesMixto),
                 fechaMixto: formatDate(fechaFinMixto),
                 fechaInicio: formatDate(startDate)
             };
