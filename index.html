@@ -896,14 +896,17 @@
                             </div>
                             <div class="calc-field">
                                 <label>Fecha de Inicio</label>
-                                <input type="date" id="calcFechaInicio">
+                                <input type="date" id="calcFechaInicio" onchange="updateElapsedMonths()">
+                                <div id="elapsedMonthsDisplay" style="margin-top: 0.5rem; padding: 0.5rem; background: #e9d8fd; border-radius: 6px; font-size: 0.85rem; color: #6b46c1; font-weight: 600; display: none;">
+                                    ⏱️ Tiempo transcurrido: <span id="elapsedMonthsValue">-</span>
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Tratamiento Previo -->
                     <div class="calc-section">
-                        <div class="calc-section-title">📅 Meses de Tratamiento Previo (si aplica)</div>
+                        <div class="calc-section-title">📅 Meses de Tratamiento Previo (distribuye los <span id="elapsedMonthsHint" style="color: #6b46c1;">0</span> meses)</div>
                         <div class="calc-row">
                             <div class="calc-field">
                                 <label>Meses a 20 mg/día</label>
@@ -1108,62 +1111,70 @@
             }
         }
 
-        // CSV Parser
+        // CSV Parser - Robust version that handles commas inside fields
         function parseCSV(csv) {
-            const lines = [];
-            let currentLine = '';
+            const results = [];
+            let row = [];
+            let cell = '';
             let inQuotes = false;
 
             for (let i = 0; i < csv.length; i++) {
                 const char = csv[i];
+                const nextChar = csv[i + 1];
 
-                if (char === '"') {
-                    if (inQuotes && csv[i + 1] === '"') {
-                        currentLine += '"';
-                        i++;
-                    } else {
-                        inQuotes = !inQuotes;
-                    }
-                } else if (char === '\n' && !inQuotes) {
-                    lines.push(currentLine);
-                    currentLine = '';
-                } else if (char === '\r' && !inQuotes) {
-                    // Skip carriage return
-                } else {
-                    currentLine += char;
-                }
-            }
-
-            if (currentLine) {
-                lines.push(currentLine);
-            }
-
-            return lines.map(line => {
-                const values = [];
-                let current = '';
-                let inQuotes = false;
-
-                for (let i = 0; i < line.length; i++) {
-                    const char = line[i];
-
+                if (inQuotes) {
                     if (char === '"') {
-                        if (inQuotes && line[i + 1] === '"') {
-                            current += '"';
+                        if (nextChar === '"') {
+                            // Escaped quote
+                            cell += '"';
                             i++;
                         } else {
-                            inQuotes = !inQuotes;
+                            // End of quoted field
+                            inQuotes = false;
                         }
-                    } else if (char === ',' && !inQuotes) {
-                        values.push(current.trim());
-                        current = '';
                     } else {
-                        current += char;
+                        cell += char;
+                    }
+                } else {
+                    if (char === '"') {
+                        // Start of quoted field
+                        inQuotes = true;
+                    } else if (char === ',') {
+                        // End of cell
+                        row.push(cell.trim());
+                        cell = '';
+                    } else if (char === '\n' || (char === '\r' && nextChar === '\n')) {
+                        // End of row
+                        row.push(cell.trim());
+                        if (row.some(c => c !== '')) {
+                            results.push(row);
+                        }
+                        row = [];
+                        cell = '';
+                        if (char === '\r') i++; // Skip \n after \r
+                    } else if (char === '\r') {
+                        // End of row (Mac style)
+                        row.push(cell.trim());
+                        if (row.some(c => c !== '')) {
+                            results.push(row);
+                        }
+                        row = [];
+                        cell = '';
+                    } else {
+                        cell += char;
                     }
                 }
+            }
 
-                values.push(current.trim());
-                return values;
-            });
+            // Don't forget the last cell and row
+            if (cell || row.length > 0) {
+                row.push(cell.trim());
+                if (row.some(c => c !== '')) {
+                    results.push(row);
+                }
+            }
+
+            return results;
         }
 
         // Data Loading
@@ -1483,6 +1494,57 @@
             const toggle = document.getElementById('calcToggle');
             container.classList.toggle('hidden');
             toggle.classList.toggle('hidden');
+        }
+
+        // Calculate elapsed months from start date
+        function updateElapsedMonths() {
+            const fechaInicio = document.getElementById('calcFechaInicio').value;
+            const display = document.getElementById('elapsedMonthsDisplay');
+            const valueSpan = document.getElementById('elapsedMonthsValue');
+            const hintSpan = document.getElementById('elapsedMonthsHint');
+
+            if (!fechaInicio) {
+                display.style.display = 'none';
+                hintSpan.textContent = '0';
+                return;
+            }
+
+            const startDate = new Date(fechaInicio);
+            const today = new Date();
+
+            // Calculate difference in months
+            let months = (today.getFullYear() - startDate.getFullYear()) * 12;
+            months += today.getMonth() - startDate.getMonth();
+
+            // Adjust for days
+            const dayDiff = today.getDate() - startDate.getDate();
+            if (dayDiff < 0) {
+                months -= 1;
+            }
+
+            // Calculate remaining days for partial month
+            const tempDate = new Date(startDate);
+            tempDate.setMonth(tempDate.getMonth() + months);
+            const remainingDays = Math.floor((today - tempDate) / (1000 * 60 * 60 * 24));
+
+            // Format display
+            let displayText = '';
+            if (months <= 0 && remainingDays <= 0) {
+                displayText = 'Aún no ha iniciado';
+                hintSpan.textContent = '0';
+            } else if (months === 0) {
+                displayText = `${remainingDays} días`;
+                hintSpan.textContent = '0';
+            } else if (remainingDays <= 0) {
+                displayText = `${months} mes${months > 1 ? 'es' : ''}`;
+                hintSpan.textContent = months;
+            } else {
+                displayText = `${months} mes${months > 1 ? 'es' : ''} y ${remainingDays} días`;
+                hintSpan.textContent = months;
+            }
+
+            valueSpan.textContent = displayText;
+            display.style.display = 'block';
         }
 
         function calculateIsotretinoin() {
