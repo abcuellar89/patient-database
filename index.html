@@ -906,38 +906,45 @@
 
                     <!-- Tratamiento Previo -->
                     <div class="calc-section">
-                        <div class="calc-section-title">📅 Tratamiento Previo (distribuye: <span id="elapsedMonthsHint" style="color: #6b46c1;">0 meses</span>)</div>
+                        <div class="calc-section-title">📅 Tratamiento Previo (total: <span id="elapsedMonthsHint" style="color: #6b46c1;">0 días</span>)</div>
                         <div class="calc-row">
                             <div class="calc-field">
                                 <label>Tiempo a 20 mg/día</label>
-                                <div style="display: flex; gap: 0.5rem;">
-                                    <input type="number" id="calcTiempo20" placeholder="0" min="0" max="730" value="0" style="flex: 1;">
-                                    <select id="calcUnidad20" style="width: 90px;">
-                                        <option value="meses">meses</option>
+                                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                    <input type="number" id="calcTiempo20" placeholder="0" min="0" max="730" value="0" style="flex: 1;" oninput="updateRemainingTime()">
+                                    <select id="calcUnidad20" style="width: 80px;" onchange="updateRemainingTime()">
                                         <option value="dias">días</option>
+                                        <option value="meses">meses</option>
                                     </select>
+                                    <button type="button" onclick="useRemaining('calcTiempo20', 'calcUnidad20')" style="padding: 0.5rem; background: #e9d8fd; border: none; border-radius: 6px; cursor: pointer; font-size: 0.75rem; white-space: nowrap;" title="Usar tiempo restante">📥 Restante</button>
                                 </div>
                             </div>
                             <div class="calc-field">
                                 <label>Tiempo a 40 mg/día</label>
-                                <div style="display: flex; gap: 0.5rem;">
-                                    <input type="number" id="calcTiempo40" placeholder="0" min="0" max="730" value="0" style="flex: 1;">
-                                    <select id="calcUnidad40" style="width: 90px;">
-                                        <option value="meses">meses</option>
+                                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                    <input type="number" id="calcTiempo40" placeholder="0" min="0" max="730" value="0" style="flex: 1;" oninput="updateRemainingTime()">
+                                    <select id="calcUnidad40" style="width: 80px;" onchange="updateRemainingTime()">
                                         <option value="dias">días</option>
+                                        <option value="meses">meses</option>
                                     </select>
+                                    <button type="button" onclick="useRemaining('calcTiempo40', 'calcUnidad40')" style="padding: 0.5rem; background: #e9d8fd; border: none; border-radius: 6px; cursor: pointer; font-size: 0.75rem; white-space: nowrap;" title="Usar tiempo restante">📥 Restante</button>
                                 </div>
                             </div>
                             <div class="calc-field">
-                                <label>Tiempo a 60/40 mg (3d×60 + 4d×40)</label>
-                                <div style="display: flex; gap: 0.5rem;">
-                                    <input type="number" id="calcTiempoMixto" placeholder="0" min="0" max="730" value="0" style="flex: 1;">
-                                    <select id="calcUnidadMixto" style="width: 90px;">
-                                        <option value="meses">meses</option>
+                                <label>Tiempo a 60/40 mg</label>
+                                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                    <input type="number" id="calcTiempoMixto" placeholder="0" min="0" max="730" value="0" style="flex: 1;" oninput="updateRemainingTime()">
+                                    <select id="calcUnidadMixto" style="width: 80px;" onchange="updateRemainingTime()">
                                         <option value="dias">días</option>
+                                        <option value="meses">meses</option>
                                     </select>
+                                    <button type="button" onclick="useRemaining('calcTiempoMixto', 'calcUnidadMixto')" style="padding: 0.5rem; background: #e9d8fd; border: none; border-radius: 6px; cursor: pointer; font-size: 0.75rem; white-space: nowrap;" title="Usar tiempo restante">📥 Restante</button>
                                 </div>
                             </div>
+                        </div>
+                        <!-- Remaining time indicator -->
+                        <div id="remainingTimeIndicator" style="margin-top: 1rem; padding: 0.75rem; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 8px; font-size: 0.9rem; display: none;">
+                            ⏳ <strong>Falta por distribuir:</strong> <span id="remainingTimeValue">0 días</span>
                         </div>
                     </div>
 
@@ -1564,6 +1571,90 @@
 
             valueSpan.textContent = displayText;
             display.style.display = 'block';
+
+            // Also update remaining time
+            updateRemainingTime();
+        }
+
+        // Global variable to store total elapsed days
+        let totalElapsedDays = 0;
+
+        // Update remaining time to distribute
+        function updateRemainingTime() {
+            const fechaInicio = document.getElementById('calcFechaInicio').value;
+            const indicator = document.getElementById('remainingTimeIndicator');
+            const valueSpan = document.getElementById('remainingTimeValue');
+
+            if (!fechaInicio) {
+                indicator.style.display = 'none';
+                totalElapsedDays = 0;
+                return;
+            }
+
+            // Calculate total elapsed days
+            const startDate = new Date(fechaInicio);
+            const today = new Date();
+            totalElapsedDays = Math.max(0, Math.floor((today - startDate) / (1000 * 60 * 60 * 24)));
+
+            // Calculate distributed days
+            const dias20 = getTiempoEnDias('calcTiempo20', 'calcUnidad20');
+            const dias40 = getTiempoEnDias('calcTiempo40', 'calcUnidad40');
+            const diasMixto = getTiempoEnDias('calcTiempoMixto', 'calcUnidadMixto');
+            const distributedDays = dias20 + dias40 + diasMixto;
+
+            // Calculate remaining
+            const remainingDays = Math.max(0, totalElapsedDays - distributedDays);
+
+            // Format display
+            if (remainingDays === 0 && distributedDays > 0) {
+                indicator.style.display = 'block';
+                indicator.style.background = 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)';
+                valueSpan.innerHTML = '✅ <strong>Completamente distribuido</strong>';
+            } else if (remainingDays > 0) {
+                indicator.style.display = 'block';
+                indicator.style.background = 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)';
+                const months = Math.floor(remainingDays / 30);
+                const days = remainingDays % 30;
+                let text = '';
+                if (months > 0 && days > 0) {
+                    text = `${months} mes${months > 1 ? 'es' : ''} y ${days} días (${remainingDays} días)`;
+                } else if (months > 0) {
+                    text = `${months} mes${months > 1 ? 'es' : ''} (${remainingDays} días)`;
+                } else {
+                    text = `${remainingDays} días`;
+                }
+                valueSpan.innerHTML = text;
+            } else {
+                indicator.style.display = 'none';
+            }
+        }
+
+        // Auto-fill remaining time into a field
+        function useRemaining(inputId, unidadId) {
+            const fechaInicio = document.getElementById('calcFechaInicio').value;
+            if (!fechaInicio) {
+                showToast('❌ Primero selecciona la fecha de inicio');
+                return;
+            }
+
+            // Calculate remaining days
+            const dias20 = getTiempoEnDias('calcTiempo20', 'calcUnidad20');
+            const dias40 = getTiempoEnDias('calcTiempo40', 'calcUnidad40');
+            const diasMixto = getTiempoEnDias('calcTiempoMixto', 'calcUnidadMixto');
+            const distributedDays = dias20 + dias40 + diasMixto;
+            const remainingDays = Math.max(0, totalElapsedDays - distributedDays);
+
+            if (remainingDays === 0) {
+                showToast('✅ Ya está todo distribuido');
+                return;
+            }
+
+            // Set the value in days (simpler and more precise)
+            document.getElementById(unidadId).value = 'dias';
+            document.getElementById(inputId).value = remainingDays;
+
+            updateRemainingTime();
+            showToast(`✓ ${remainingDays} días agregados`);
         }
 
         // Helper: convert time to days based on unit
