@@ -215,6 +215,38 @@
             border-color: rgba(255, 255, 255, 0.5);
         }
 
+        .header-buttons {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .update-btn {
+            padding: 0.625rem 1.25rem;
+            background: rgba(76, 175, 80, 0.2);
+            color: white;
+            border: 2px solid rgba(76, 175, 80, 0.5);
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .update-btn:hover {
+            background: rgba(76, 175, 80, 0.35);
+            border-color: rgba(76, 175, 80, 0.8);
+        }
+
+        .update-btn.updating {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
         .controls {
             max-width: 1600px;
             margin: 0 auto;
@@ -969,6 +1001,16 @@
                 text-align: center;
             }
 
+            .header-buttons {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .update-btn, .logout-btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.8rem;
+            }
+
             .controls, .main-content {
                 padding-left: 1rem;
                 padding-right: 1rem;
@@ -1042,9 +1084,14 @@
                     <h1>🏥 Base de Datos de Pacientes</h1>
                     <p>Cuestionario de Consulta</p>
                 </div>
-                <button class="logout-btn" onclick="handleLogout()">
-                    🚪 Cerrar Sesión
-                </button>
+                <div class="header-buttons">
+                    <button class="update-btn" id="updateBtn" onclick="handleUpdate()">
+                        🔄 Actualizar
+                    </button>
+                    <button class="logout-btn" onclick="handleLogout()">
+                        🚪 Cerrar Sesión
+                    </button>
+                </div>
             </div>
         </header>
 
@@ -1308,6 +1355,47 @@
         function handleLogout() {
             setAuthenticated(false);
             showLogin();
+        }
+
+        async function handleUpdate() {
+            const btn = document.getElementById('updateBtn');
+            const originalText = btn.innerHTML;
+
+            btn.innerHTML = '⏳ Actualizando...';
+            btn.classList.add('updating');
+
+            try {
+                // Limpiar todos los caches
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys();
+                    await Promise.all(
+                        cacheNames.map(cacheName => caches.delete(cacheName))
+                    );
+                }
+
+                // Desregistrar service workers
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    await Promise.all(
+                        registrations.map(reg => reg.unregister())
+                    );
+                }
+
+                btn.innerHTML = '✅ ¡Actualizado!';
+
+                // Recargar la página después de un momento
+                setTimeout(() => {
+                    window.location.reload(true);
+                }, 1000);
+
+            } catch (error) {
+                console.error('Error al actualizar:', error);
+                btn.innerHTML = '❌ Error';
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.classList.remove('updating');
+                }, 2000);
+            }
         }
 
         function showLogin() {
