@@ -795,6 +795,76 @@
             margin-top: 0.25rem;
         }
 
+        /* ==================== CALCULATOR TABS ==================== */
+        .calc-tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 1.5rem;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid #e9d8fd;
+        }
+
+        .calc-tab {
+            flex: 1;
+            padding: 1rem;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: all 0.25s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+            background: #f8f5ff;
+            color: #8b7fb5;
+        }
+
+        .calc-tab:first-child {
+            border-right: 1px solid #e9d8fd;
+        }
+
+        .calc-tab.active {
+            color: white;
+        }
+
+        .calc-tab[data-tab="seguimiento"].active {
+            background: linear-gradient(135deg, #6b46c1 0%, #805ad5 100%);
+        }
+
+        .calc-tab[data-tab="planificador"].active {
+            background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%);
+        }
+
+        .calc-tab:not(.active):hover {
+            background: #ede9fe;
+            color: #6b46c1;
+        }
+
+        .calc-tab-icon {
+            font-size: 1.3rem;
+        }
+
+        .calc-tab-label {
+            font-size: 0.8rem;
+            font-weight: 400;
+            opacity: 0.85;
+        }
+
+        .calc-tab.active .calc-tab-label {
+            opacity: 1;
+        }
+
+        .calc-tab-panel {
+            display: none;
+        }
+
+        .calc-tab-panel.active {
+            display: block;
+        }
+
         .copy-results-btn {
             background: var(--accent);
             color: white;
@@ -1127,7 +1197,7 @@
                     <button class="calculator-close" onclick="toggleCalculator()">✕</button>
                 </div>
                 <div class="calculator-body">
-                    <!-- Datos del Paciente -->
+                    <!-- Shared: Datos del Paciente -->
                     <div class="calc-section">
                         <div class="calc-section-title">📋 Datos del Paciente</div>
                         <div class="calc-row">
@@ -1142,170 +1212,194 @@
                                 <label>Peso del Paciente (kg)</label>
                                 <input type="number" id="calcPeso" placeholder="Ej: 70" min="1" max="300">
                             </div>
-                            <div class="calc-field">
-                                <label>Fecha de Inicio</label>
-                                <input type="date" id="calcFechaInicio" onchange="updateElapsedMonths()">
-                                <div id="elapsedMonthsDisplay" style="margin-top: 0.5rem; padding: 0.5rem; background: #e9d8fd; border-radius: 6px; font-size: 0.85rem; color: #6b46c1; font-weight: 600; display: none;">
-                                    ⏱️ Tiempo transcurrido: <span id="elapsedMonthsValue">-</span>
-                                </div>
-                            </div>
                         </div>
                     </div>
 
-                    <!-- Tratamiento Previo -->
-                    <div class="calc-section">
-                        <div class="calc-section-title">📅 Tratamiento Previo (total: <span id="elapsedMonthsHint" style="color: #6b46c1;">0 días</span>)</div>
-                        <div class="calc-row">
-                            <div class="calc-field">
-                                <label>Tiempo a 20 mg/día</label>
-                                <div style="display: flex; gap: 0.5rem; align-items: center;">
-                                    <input type="number" id="calcTiempo20" placeholder="0" min="0" max="730" value="0" style="flex: 1;" oninput="updateRemainingTime()">
-                                    <select id="calcUnidad20" style="width: 80px;" onchange="updateRemainingTime()">
-                                        <option value="dias">días</option>
-                                        <option value="meses">meses</option>
-                                    </select>
-                                    <button type="button" onclick="useRemaining('calcTiempo20', 'calcUnidad20')" style="padding: 0.5rem; background: #e9d8fd; border: none; border-radius: 6px; cursor: pointer; font-size: 0.75rem; white-space: nowrap;" title="Usar tiempo restante">📥 Restante</button>
+                    <!-- Tab Switcher -->
+                    <div class="calc-tabs">
+                        <button class="calc-tab active" data-tab="seguimiento" onclick="switchCalcTab('seguimiento')">
+                            <span class="calc-tab-icon">📅</span>
+                            <strong>Seguimiento</strong>
+                            <span class="calc-tab-label">Paciente en tratamiento</span>
+                        </button>
+                        <button class="calc-tab" data-tab="planificador" onclick="switchCalcTab('planificador')">
+                            <span class="calc-tab-icon">🗓️</span>
+                            <strong>Nuevo Plan</strong>
+                            <span class="calc-tab-label">Planificar tratamiento</span>
+                        </button>
+                    </div>
+
+                    <!-- TAB 1: Seguimiento (existing patient tracking) -->
+                    <div class="calc-tab-panel active" id="tabSeguimiento">
+                        <div class="calc-section">
+                            <div class="calc-row">
+                                <div class="calc-field">
+                                    <label>Fecha de Inicio del Tratamiento</label>
+                                    <input type="date" id="calcFechaInicio" onchange="updateElapsedMonths()">
+                                    <div id="elapsedMonthsDisplay" style="margin-top: 0.5rem; padding: 0.5rem; background: #e9d8fd; border-radius: 6px; font-size: 0.85rem; color: #6b46c1; font-weight: 600; display: none;">
+                                        ⏱️ Tiempo transcurrido: <span id="elapsedMonthsValue">-</span>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="calc-field">
-                                <label>Tiempo a 40 mg/día</label>
-                                <div style="display: flex; gap: 0.5rem; align-items: center;">
-                                    <input type="number" id="calcTiempo40" placeholder="0" min="0" max="730" value="0" style="flex: 1;" oninput="updateRemainingTime()">
-                                    <select id="calcUnidad40" style="width: 80px;" onchange="updateRemainingTime()">
-                                        <option value="dias">días</option>
-                                        <option value="meses">meses</option>
-                                    </select>
-                                    <button type="button" onclick="useRemaining('calcTiempo40', 'calcUnidad40')" style="padding: 0.5rem; background: #e9d8fd; border: none; border-radius: 6px; cursor: pointer; font-size: 0.75rem; white-space: nowrap;" title="Usar tiempo restante">📥 Restante</button>
-                                </div>
-                            </div>
-                            <div class="calc-field">
-                                <label>Tiempo a 60 mg/día (3 cápsulas)</label>
-                                <div style="display: flex; gap: 0.5rem; align-items: center;">
-                                    <input type="number" id="calcTiempo60" placeholder="0" min="0" max="730" value="0" style="flex: 1;" oninput="updateRemainingTime()">
-                                    <select id="calcUnidad60" style="width: 80px;" onchange="updateRemainingTime()">
-                                        <option value="dias">días</option>
-                                        <option value="meses">meses</option>
-                                    </select>
-                                    <button type="button" onclick="useRemaining('calcTiempo60', 'calcUnidad60')" style="padding: 0.5rem; background: #e9d8fd; border: none; border-radius: 6px; cursor: pointer; font-size: 0.75rem; white-space: nowrap;" title="Usar tiempo restante">📥 Restante</button>
-                                </div>
-                            </div>
-                            <div class="calc-field">
-                                <label>Tiempo a 60/40 mg (3d+4d)</label>
-                                <div style="display: flex; gap: 0.5rem; align-items: center;">
-                                    <input type="number" id="calcTiempoMixto" placeholder="0" min="0" max="730" value="0" style="flex: 1;" oninput="updateRemainingTime()">
-                                    <select id="calcUnidadMixto" style="width: 80px;" onchange="updateRemainingTime()">
-                                        <option value="dias">días</option>
-                                        <option value="meses">meses</option>
-                                    </select>
-                                    <button type="button" onclick="useRemaining('calcTiempoMixto', 'calcUnidadMixto')" style="padding: 0.5rem; background: #e9d8fd; border: none; border-radius: 6px; cursor: pointer; font-size: 0.75rem; white-space: nowrap;" title="Usar tiempo restante">📥 Restante</button>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Remaining time indicator -->
-                        <div id="remainingTimeIndicator" style="margin-top: 1rem; padding: 0.75rem; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 8px; font-size: 0.9rem; display: none;">
-                            ⏳ <strong>Falta por distribuir:</strong> <span id="remainingTimeValue">0 días</span>
                         </div>
 
-                        <!-- Days missed -->
-                        <div class="calc-row" style="margin-top: 1rem;">
-                            <div class="calc-field">
-                                <label>⚠️ Días que NO tomó el medicamento</label>
-                                <input type="number" id="calcDiasPerdidos" placeholder="0" min="0" max="365" value="0" style="border-color: #f59e0b;">
-                                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Se restan del tiempo transcurrido (ej: paciente olvidó tomar por 30 días)</div>
+                        <div class="calc-section">
+                            <div class="calc-section-title">📅 Tratamiento Previo (total: <span id="elapsedMonthsHint" style="color: #6b46c1;">0 días</span>)</div>
+                            <div class="calc-row">
+                                <div class="calc-field">
+                                    <label>Tiempo a 20 mg/día</label>
+                                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                        <input type="number" id="calcTiempo20" placeholder="0" min="0" max="730" value="0" style="flex: 1;" oninput="updateRemainingTime()">
+                                        <select id="calcUnidad20" style="width: 80px;" onchange="updateRemainingTime()">
+                                            <option value="dias">días</option>
+                                            <option value="meses">meses</option>
+                                        </select>
+                                        <button type="button" onclick="useRemaining('calcTiempo20', 'calcUnidad20')" style="padding: 0.5rem; background: #e9d8fd; border: none; border-radius: 6px; cursor: pointer; font-size: 0.75rem; white-space: nowrap;" title="Usar tiempo restante">📥 Restante</button>
+                                    </div>
+                                </div>
+                                <div class="calc-field">
+                                    <label>Tiempo a 40 mg/día</label>
+                                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                        <input type="number" id="calcTiempo40" placeholder="0" min="0" max="730" value="0" style="flex: 1;" oninput="updateRemainingTime()">
+                                        <select id="calcUnidad40" style="width: 80px;" onchange="updateRemainingTime()">
+                                            <option value="dias">días</option>
+                                            <option value="meses">meses</option>
+                                        </select>
+                                        <button type="button" onclick="useRemaining('calcTiempo40', 'calcUnidad40')" style="padding: 0.5rem; background: #e9d8fd; border: none; border-radius: 6px; cursor: pointer; font-size: 0.75rem; white-space: nowrap;" title="Usar tiempo restante">📥 Restante</button>
+                                    </div>
+                                </div>
+                                <div class="calc-field">
+                                    <label>Tiempo a 60 mg/día (3 cápsulas)</label>
+                                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                        <input type="number" id="calcTiempo60" placeholder="0" min="0" max="730" value="0" style="flex: 1;" oninput="updateRemainingTime()">
+                                        <select id="calcUnidad60" style="width: 80px;" onchange="updateRemainingTime()">
+                                            <option value="dias">días</option>
+                                            <option value="meses">meses</option>
+                                        </select>
+                                        <button type="button" onclick="useRemaining('calcTiempo60', 'calcUnidad60')" style="padding: 0.5rem; background: #e9d8fd; border: none; border-radius: 6px; cursor: pointer; font-size: 0.75rem; white-space: nowrap;" title="Usar tiempo restante">📥 Restante</button>
+                                    </div>
+                                </div>
+                                <div class="calc-field">
+                                    <label>Tiempo a 60/40 mg (3d+4d)</label>
+                                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                        <input type="number" id="calcTiempoMixto" placeholder="0" min="0" max="730" value="0" style="flex: 1;" oninput="updateRemainingTime()">
+                                        <select id="calcUnidadMixto" style="width: 80px;" onchange="updateRemainingTime()">
+                                            <option value="dias">días</option>
+                                            <option value="meses">meses</option>
+                                        </select>
+                                        <button type="button" onclick="useRemaining('calcTiempoMixto', 'calcUnidadMixto')" style="padding: 0.5rem; background: #e9d8fd; border: none; border-radius: 6px; cursor: pointer; font-size: 0.75rem; white-space: nowrap;" title="Usar tiempo restante">📥 Restante</button>
+                                    </div>
+                                </div>
                             </div>
+                            <!-- Remaining time indicator -->
+                            <div id="remainingTimeIndicator" style="margin-top: 1rem; padding: 0.75rem; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 8px; font-size: 0.9rem; display: none;">
+                                ⏳ <strong>Falta por distribuir:</strong> <span id="remainingTimeValue">0 días</span>
+                            </div>
+
+                            <!-- Days missed -->
+                            <div class="calc-row" style="margin-top: 1rem;">
+                                <div class="calc-field">
+                                    <label>⚠️ Días que NO tomó el medicamento</label>
+                                    <input type="number" id="calcDiasPerdidos" placeholder="0" min="0" max="365" value="0" style="border-color: #f59e0b;">
+                                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Se restan del tiempo transcurrido (ej: paciente olvidó tomar por 30 días)</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button class="calc-btn" onclick="calculateIsotretinoin()">
+                            🧮 Calcular Seguimiento
+                        </button>
+
+                        <!-- Resultados Seguimiento -->
+                        <div class="calc-results hidden" id="calcResults">
+                            <div class="calc-results-title">📊 Resultados del Seguimiento</div>
+
+                            <div class="result-item">
+                                <span class="result-label">Dosis Total Requerida:</span>
+                                <span class="result-value" id="resDosisTotal">-</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-label">Dosis Ya Tomada:</span>
+                                <span class="result-value" id="resDosisTomada">-</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-label">Dosis Restante:</span>
+                                <span class="result-value highlight" id="resDosisRestante">-</span>
+                            </div>
+
+                            <div class="calc-section-title" style="margin-top: 1.5rem;">⏱️ Tiempo Restante por Esquema</div>
+                            <div class="scenarios-grid">
+                                <div class="scenario-card">
+                                    <h4>20 mg/día</h4>
+                                    <div class="time" id="resTiempo20">-</div>
+                                    <div class="date" id="resFecha20">-</div>
+                                </div>
+                                <div class="scenario-card">
+                                    <h4>40 mg/día</h4>
+                                    <div class="time" id="resTiempo40">-</div>
+                                    <div class="date" id="resFecha40">-</div>
+                                </div>
+                                <div class="scenario-card">
+                                    <h4>60 mg/día</h4>
+                                    <div class="time" id="resTiempo60">-</div>
+                                    <div class="date" id="resFecha60">-</div>
+                                </div>
+                                <div class="scenario-card">
+                                    <h4>60/40 mg (3d+4d)</h4>
+                                    <div class="time" id="resTiempoMixto">-</div>
+                                    <div class="date" id="resFechaMixto">-</div>
+                                </div>
+                            </div>
+
+                            <button class="copy-results-btn" onclick="copyCalcResults()">
+                                📋 Copiar Resultados
+                            </button>
                         </div>
                     </div>
 
-                    <!-- 2-Phase Treatment Planner -->
-                    <div class="calc-section">
-                        <div class="calc-section-title">🗓️ Planificador de Tratamiento (nuevo paciente)</div>
-                        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem;">
-                            Simula: iniciar con una dosis baja y luego subir. Requiere peso y dosis total arriba.
-                        </div>
-                        <div class="calc-row">
-                            <div class="calc-field">
-                                <label>Fase 1: Dosis (mg/día)</label>
-                                <select id="planFase1Dosis">
-                                    <option value="20">20 mg</option>
-                                    <option value="40">40 mg</option>
-                                    <option value="60">60 mg</option>
-                                </select>
+                    <!-- TAB 2: Planificador (new patient planning) -->
+                    <div class="calc-tab-panel" id="tabPlanificador">
+                        <div class="calc-section">
+                            <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+                                Planifica un tratamiento en 2 fases: inicia con dosis baja y luego sube. Las fechas se calculan desde hoy.
                             </div>
-                            <div class="calc-field">
-                                <label>Fase 1: Duración</label>
-                                <div style="display: flex; gap: 0.5rem; align-items: center;">
-                                    <input type="number" id="planFase1Tiempo" placeholder="1" min="1" max="12" value="1" style="flex: 1;">
-                                    <select id="planFase1Unidad" style="width: 80px;">
-                                        <option value="meses" selected>meses</option>
-                                        <option value="dias">días</option>
+                            <div class="calc-row">
+                                <div class="calc-field">
+                                    <label>Fase 1: Dosis (mg/día)</label>
+                                    <select id="planFase1Dosis">
+                                        <option value="20">20 mg</option>
+                                        <option value="40">40 mg</option>
+                                        <option value="60">60 mg</option>
+                                    </select>
+                                </div>
+                                <div class="calc-field">
+                                    <label>Fase 1: Duración</label>
+                                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                        <input type="number" id="planFase1Tiempo" placeholder="1" min="1" max="12" value="1" style="flex: 1;">
+                                        <select id="planFase1Unidad" style="width: 80px;">
+                                            <option value="meses" selected>meses</option>
+                                            <option value="dias">días</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="calc-field">
+                                    <label>Fase 2: Dosis (mg/día)</label>
+                                    <select id="planFase2Dosis">
+                                        <option value="20">20 mg</option>
+                                        <option value="40" selected>40 mg</option>
+                                        <option value="60">60 mg</option>
                                     </select>
                                 </div>
                             </div>
-                            <div class="calc-field">
-                                <label>Fase 2: Dosis (mg/día)</label>
-                                <select id="planFase2Dosis">
-                                    <option value="20">20 mg</option>
-                                    <option value="40" selected>40 mg</option>
-                                    <option value="60">60 mg</option>
-                                </select>
-                            </div>
                         </div>
-                        <button class="calc-btn" onclick="calculatePlan()" style="margin-top: 0.75rem; background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%);">
+
+                        <button class="calc-btn" onclick="calculatePlan()" style="background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%);">
                             🗓️ Calcular Plan
                         </button>
+
                         <div id="planResults" class="hidden" style="margin-top: 1rem; padding: 1rem; background: linear-gradient(135deg, #ede9fe 0%, #f5f3ff 100%); border-radius: 8px; border: 1px solid #ddd6fe;">
                             <div id="planResultsContent" style="font-size: 0.9rem;"></div>
                         </div>
-                    </div>
-
-                    <button class="calc-btn" onclick="calculateIsotretinoin()">
-                        🧮 Calcular
-                    </button>
-
-                    <!-- Resultados -->
-                    <div class="calc-results hidden" id="calcResults">
-                        <div class="calc-results-title">📊 Resultados del Cálculo</div>
-
-                        <div class="result-item">
-                            <span class="result-label">Dosis Total Requerida:</span>
-                            <span class="result-value" id="resDosisTotal">-</span>
-                        </div>
-                        <div class="result-item">
-                            <span class="result-label">Dosis Ya Tomada:</span>
-                            <span class="result-value" id="resDosisTomada">-</span>
-                        </div>
-                        <div class="result-item">
-                            <span class="result-label">Dosis Restante:</span>
-                            <span class="result-value highlight" id="resDosisRestante">-</span>
-                        </div>
-
-                        <div class="calc-section-title" style="margin-top: 1.5rem;">⏱️ Tiempo Restante por Esquema</div>
-                        <div class="scenarios-grid">
-                            <div class="scenario-card">
-                                <h4>20 mg/día</h4>
-                                <div class="time" id="resTiempo20">-</div>
-                                <div class="date" id="resFecha20">-</div>
-                            </div>
-                            <div class="scenario-card">
-                                <h4>40 mg/día</h4>
-                                <div class="time" id="resTiempo40">-</div>
-                                <div class="date" id="resFecha40">-</div>
-                            </div>
-                            <div class="scenario-card">
-                                <h4>60 mg/día</h4>
-                                <div class="time" id="resTiempo60">-</div>
-                                <div class="date" id="resFecha60">-</div>
-                            </div>
-                            <div class="scenario-card">
-                                <h4>60/40 mg (3d+4d)</h4>
-                                <div class="time" id="resTiempoMixto">-</div>
-                                <div class="date" id="resFechaMixto">-</div>
-                            </div>
-                        </div>
-
-                        <button class="copy-results-btn" onclick="copyCalcResults()">
-                            📋 Copiar Resultados
-                        </button>
                     </div>
                 </div>
             </div>
@@ -1897,6 +1991,16 @@
 
         // ==================== ISOTRETINOIN CALCULATOR ====================
         let calcResultsData = null;
+
+        function switchCalcTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.calc-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.tab === tabName);
+            });
+            // Update tab panels
+            document.getElementById('tabSeguimiento').classList.toggle('active', tabName === 'seguimiento');
+            document.getElementById('tabPlanificador').classList.toggle('active', tabName === 'planificador');
+        }
 
         function toggleCalculator() {
             const container = document.getElementById('calculatorContainer');
