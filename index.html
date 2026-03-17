@@ -2205,6 +2205,20 @@
             const totalDias = fase1Dias + Math.round(fase2Dias);
             const totalMeses = (totalDias / 30).toFixed(1);
 
+            // Dates
+            const today = new Date();
+            function addPlanDays(date, days) {
+                const r = new Date(date);
+                r.setDate(r.getDate() + Math.round(days));
+                return r;
+            }
+            function fmtDate(date) {
+                return date.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' });
+            }
+            const fechaInicioPlan = today;
+            const fechaFinFase1 = addPlanDays(today, fase1Dias);
+            const fechaFinPlan = addPlanDays(today, totalDias);
+
             // Capsules info
             function capsInfo(dose) {
                 const caps = dose / 20;
@@ -2224,16 +2238,19 @@
                         <div style="font-size: 0.85rem; color: var(--text-muted);">(${capsInfo(fase1Dosis)})</div>
                         <div style="margin-top: 0.5rem;">Duración: <strong>${fmtDays(fase1Dias)}</strong></div>
                         <div>Dosis acumulada: <strong>${fase1DosisTotal.toLocaleString()} mg</strong></div>
+                        <div style="margin-top: 0.5rem; font-size: 0.85rem; color: #7c3aed;">📅 ${fmtDate(fechaInicioPlan)} → ${fmtDate(fechaFinFase1)}</div>
                     </div>
                     <div style="background: white; padding: 0.75rem; border-radius: 8px; border-left: 4px solid #2563eb;">
                         <div style="font-weight: 700; color: #2563eb;">Fase 2: ${fase2Dosis} mg/día</div>
                         <div style="font-size: 0.85rem; color: var(--text-muted);">(${capsInfo(fase2Dosis)})</div>
                         <div style="margin-top: 0.5rem;">Duración: <strong>${fmtDays(fase2Dias)}</strong></div>
                         <div>Dosis restante: <strong>${Math.round(dosisRestante).toLocaleString()} mg</strong></div>
+                        <div style="margin-top: 0.5rem; font-size: 0.85rem; color: #2563eb;">📅 ${fmtDate(fechaFinFase1)} → ${fmtDate(fechaFinPlan)}</div>
                     </div>
                 </div>
                 <div style="margin-top: 0.75rem; padding: 0.75rem; background: white; border-radius: 8px; text-align: center; font-size: 1rem;">
-                    📅 <strong>Tratamiento total: ${fmtDays(totalDias)}</strong> (~${totalMeses} meses)
+                    📅 <strong>Inicio: ${fmtDate(fechaInicioPlan)}</strong> → <strong>Fin: ${fmtDate(fechaFinPlan)}</strong>
+                    <div style="font-size: 0.9rem; color: var(--text-muted); margin-top: 0.25rem;">Tratamiento total: ${fmtDays(totalDias)} (~${totalMeses} meses)</div>
                 </div>`;
 
             if (fase1DosisTotal >= dosisTotalRequerida) {
